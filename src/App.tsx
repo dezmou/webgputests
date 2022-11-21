@@ -14,11 +14,20 @@ function App() {
 
       async function matrixMultiplication(device: GPUDevice) {
         // Result Matrix
-        const resultMatrixBufferSize = Float32Array.BYTES_PER_ELEMENT *( 256 * 8 * 8 + 1)
+        const resultMatrixBufferSize = Float32Array.BYTES_PER_ELEMENT *( 256 * 65535);
         const resultMatrixBuffer = device.createBuffer({
           size: resultMatrixBufferSize,
           usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
         });
+
+        const input = device.createBuffer({
+          mappedAtCreation: true,
+          size: Uint32Array.BYTES_PER_ELEMENT,
+          usage: GPUBufferUsage.STORAGE,
+        });
+        const bufferInput = input.getMappedRange();
+        new Int32Array(bufferInput).set([5000]);
+        input.unmap();
 
         const bindGroupLayout = device.createBindGroupLayout({
           entries: [
@@ -27,6 +36,13 @@ function App() {
               visibility: GPUShaderStage.COMPUTE,
               buffer: {
                 type: 'storage',
+              },
+            },
+            {
+              binding: 1,
+              visibility: GPUShaderStage.COMPUTE,
+              buffer: {
+                type: 'read-only-storage',
               },
             },
           ],
@@ -41,16 +57,24 @@ function App() {
                 buffer: resultMatrixBuffer,
               },
             },
+            {
+              binding: 1,
+              resource: {
+                buffer: input,
+              },
+            },
           ],
         });
 
         const shaderModule = device.createShaderModule({
           code: /* wgsl */`
-            @group(0) @binding(0) var<storage, read_write> resultMatrix : array<f32>;
+            @group(0) @binding(0) var<storage, read_write> resultMatrix : array<u32>;
+            @group(0) @binding(1) var<storage> input : array<u32>;
       
             @compute @workgroup_size(256)
             fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
-              resultMatrix[global_id.z * 8 + global_id.y * 8 + global_id.x] = 69;
+              resultMatrix[global_id.x] = bitcast<u32>(input[0]);
+              // resultMatrix[0] = bitcast<u32>(global_id.x);
             }
           `,
         });
@@ -69,7 +93,7 @@ function App() {
         const passEncoder = commandEncoder.beginComputePass();
         passEncoder.setPipeline(computePipeline);
         passEncoder.setBindGroup(0, bindGroup);
-        passEncoder.dispatchWorkgroups(64);
+        passEncoder.dispatchWorkgroups(65535);
         passEncoder.end();
 
         const gpuReadBuffer = device.createBuffer({
@@ -90,13 +114,14 @@ function App() {
 
         await gpuReadBuffer.mapAsync(GPUMapMode.READ);
         const arrayBuffer = gpuReadBuffer.getMappedRange();
-        const res = new Float32Array(arrayBuffer);
+        const res = new Int32Array(arrayBuffer);
         let total = 0;
         for (let i=0; i< res.length;i++){
           if (res[i] === 69){
             total += 1;
           }
         }
+        console.log(res);
         console.log(`${total} / ${res.length}`);
       }
 
