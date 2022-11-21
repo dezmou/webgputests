@@ -14,7 +14,7 @@ function App() {
 
       async function matrixMultiplication(device: GPUDevice) {
         // Result Matrix
-        const resultMatrixBufferSize = Float32Array.BYTES_PER_ELEMENT *( 256 * 65535);
+        const resultMatrixBufferSize = Float32Array.BYTES_PER_ELEMENT * (256 * 65535);
         const resultMatrixBuffer = device.createBuffer({
           size: resultMatrixBufferSize,
           usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
@@ -46,7 +46,7 @@ function App() {
               },
             },
           ],
-        }as any);
+        } as any);
 
         const bindGroup = device.createBindGroup({
           layout: bindGroupLayout,
@@ -73,7 +73,7 @@ function App() {
       
             @compute @workgroup_size(256)
             fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
-              resultMatrix[global_id.x] = bitcast<u32>(input[0]);
+              resultMatrix[global_id.x] = bitcast<u32>(input[0] + global_id.x);
               // resultMatrix[0] = bitcast<u32>(global_id.x);
             }
           `,
@@ -116,8 +116,8 @@ function App() {
         const arrayBuffer = gpuReadBuffer.getMappedRange();
         const res = new Int32Array(arrayBuffer);
         let total = 0;
-        for (let i=0; i< res.length;i++){
-          if (res[i] === 69){
+        for (let i = 0; i < res.length; i++) {
+          if (res[i] === 69) {
             total += 1;
           }
         }
