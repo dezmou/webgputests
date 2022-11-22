@@ -73,8 +73,14 @@ function App() {
       
             @compute @workgroup_size(256)
             fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
-              resultMatrix[global_id.x] = bitcast<u32>(input[0] + global_id.x);
-              // resultMatrix[0] = bitcast<u32>(global_id.x);
+              var chien : i32 = 485;
+              for (var i=0; i<5784;i++){
+                chien += i;
+                if (chien % 4500 == 0) {
+                  chien = 0;
+                }
+              }
+              resultMatrix[global_id.x] = bitcast<u32>(input[0] + global_id.x + bitcast<u32>( chien));
             }
           `,
         });
@@ -110,19 +116,14 @@ function App() {
         );
 
         const gpuCommands = commandEncoder.finish();
+        const time = performance.now()
         device.queue.submit([gpuCommands]);
-
         await gpuReadBuffer.mapAsync(GPUMapMode.READ);
+        console.log(performance.now() - time);
+
         const arrayBuffer = gpuReadBuffer.getMappedRange();
         const res = new Int32Array(arrayBuffer);
-        let total = 0;
-        for (let i = 0; i < res.length; i++) {
-          if (res[i] === 69) {
-            total += 1;
-          }
-        }
         console.log(res);
-        console.log(`${total} / ${res.length}`);
       }
 
       testWebGPU();
