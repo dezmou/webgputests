@@ -12,7 +12,7 @@ function App() {
 
       // First Matrix
 
-      const firstMatrix = new Int32Array(Array.from({length : 256}).map((e,i) => i));
+      const firstMatrix = new Int32Array(Array.from({length : 256}).map((e,i) => i + 1));
 
       const gpuBufferFirstMatrix = device.createBuffer({
         mappedAtCreation: true,
@@ -73,7 +73,7 @@ function App() {
           @group(0) @binding(0) var<storage, read> firstMatrix : array<i32>;
           @group(0) @binding(1) var<storage, read_write> resultMatrix : array<i32>;
       
-          @compute @workgroup_size(256, 1)
+          @compute @workgroup_size(1, 1)
           fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
             let index = global_id.x;
             resultMatrix[index] = firstMatrix[index] * 2;
