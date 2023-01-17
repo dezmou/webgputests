@@ -92,20 +92,16 @@ function App() {
 
           fn sha256_update(ctx : ptr<function, SHA256_CTX> , len : u32)
           {
-            (*ctx).datalen = 12;
-            // for (var i: u32 = 0; i < len; i++) {
-              
-            //   ctx.data[ctx.datalen] = data[i];
-            //   ctx.datalen ++;
-            //   if (ctx.datalen == 64){
-            //   //     sha256_transform(ctx, ctx->data);
-            //   ctx.bitlen += 512;
-            //   ctx.datalen = 0;
-            //   }
-            // }
+            for (var i: u32 = 0; i < len; i++) {
+              (*ctx).data[(*ctx).datalen] = data[i];
+              (*ctx).datalen ++;
+              if ((*ctx).datalen == 64){
+              //     sha256_transform(ctx, ctx->data);
+              (*ctx).bitlen += 512;
+              (*ctx).datalen = 0;
+              }
+            }
           }
-          
-
       
           @compute @workgroup_size(1, 1)
           fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
@@ -126,21 +122,9 @@ function App() {
 
             var len : u32 = 2;
             sha256_update(&ctx, len);
-            // sha256_update
 
-            // for (var i: u32 = 0; i < len; i++) {
-            //   ctx.data[ctx.datalen] = data[i];
-            //   ctx.datalen ++;
-            //   if (ctx.datalen == 64){
-            //   //     sha256_transform(ctx, ctx->data);
-            //   ctx.bitlen += 512;
-            //   ctx.datalen = 0;
-            //   }
-            // }
-
-            let index = global_id.x;
+            // let index = global_id.x;
             result[0] = ctx.datalen;
-            // result[index] = data[index] * 2;
           }
         `
       });
