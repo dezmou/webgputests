@@ -60,7 +60,7 @@ const sha256hash_t initial_value = {
 	{0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19}
 };
 
-unsigned char* sha256padding(unsigned char* message, uint64_t* num_bytes){
+int* sha256padding(int* message, uint64_t* num_bytes){
 
 	/* Parses the message and returns a 512 bit padded message 
 		char* message: the messages to be parsed
@@ -69,7 +69,7 @@ unsigned char* sha256padding(unsigned char* message, uint64_t* num_bytes){
 	*/
 
 	/* Number of bits of the original message */
-	uint64_t num_bytes_message = strlen((char*)message);
+	uint64_t num_bytes_message = 2;
 	uint64_t len = 8*num_bytes_message;
 	
 
@@ -79,7 +79,7 @@ unsigned char* sha256padding(unsigned char* message, uint64_t* num_bytes){
 	uint16_t k = (448-mod_lhs>=0)?(448-mod_lhs):(448-mod_lhs)+512;
 
 	uint64_t padded_length = (len + 1 + k + 64)/8;
-	unsigned char* padded_message = malloc(sizeof(unsigned char)*padded_length);
+	unsigned int* padded_message = malloc(sizeof(unsigned int)*padded_length);
 	
 	int64_t i;
 	for( i = 0; i < num_bytes_message; i++){
@@ -87,7 +87,7 @@ unsigned char* sha256padding(unsigned char* message, uint64_t* num_bytes){
 	}
 
 	/* First byte after message */
-	unsigned char first_byte = 128;
+	unsigned int first_byte = 128;
 	padded_message[i] = first_byte;
 	i++;
 
@@ -113,7 +113,7 @@ unsigned char* sha256padding(unsigned char* message, uint64_t* num_bytes){
 	return padded_message;
 }
 
-msg_block_t* create_message_block(unsigned char* padded_message, uint64_t len){
+msg_block_t* create_message_block(int* padded_message, uint64_t len){
 
 	/* Allocate space for the message block.
 	   Should be exactly the number of bytes
@@ -148,7 +148,7 @@ msg_block_t* create_message_block(unsigned char* padded_message, uint64_t len){
 	return message_block;
 }
 
-sha256hash_t sha256sum(unsigned char* message) {
+sha256hash_t sha256sum(int* message) {
 
 	static sha256hash_t result;
 
@@ -161,7 +161,7 @@ sha256hash_t sha256sum(unsigned char* message) {
 
 	/*Secure Hash Standards Section 6.2.1
 	  Preprocessing */
-	unsigned char* padded_message = sha256padding(message, &n);
+	int* padded_message = sha256padding(message, &n);
 	sha256hash_t H = initial_value;
 
 	msg_block_t* message_block = create_message_block(padded_message, n);

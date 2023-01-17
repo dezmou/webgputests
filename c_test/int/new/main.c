@@ -5,9 +5,9 @@
 
 int main( ){
 
-	unsigned int input[]  = {0x69};
+	unsigned int input[]  = {0x69, 0x69};
 
-	sha256hash_t result = sha256sum((unsigned char*)input);
+	sha256hash_t result = sha256sum(input);
     printf("%s\n", sha256_to_string(result));
 
 	return 0;
