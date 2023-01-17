@@ -219,7 +219,7 @@ function App() {
             (*ctx).data[57] = (*ctx).bitlen >> 48;
             (*ctx).data[56] = (*ctx).bitlen >> 56;
 
-            result[0] = ((*ctx).bitlen);
+            result[0] = ((*ctx).data[59]);
 
 
             // sha256_transform(ctx);

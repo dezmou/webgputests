@@ -45,7 +45,6 @@ static const WORD k[64] = {
 void sha256_transform(SHA256_CTX *ctx, const BYTE data[])
 {
 	WORD a, b, c, d, e, f, g, h, i, j, t1, t2, m[64];
-	printf("%d\n\n", data[59]);
 
 	for (i = 0, j = 0; i < 16; ++i, j += 4){
 		m[i] = (data[j] << 24) | (data[j + 1] << 16) | (data[j + 2] << 8) | (data[j + 3]);
@@ -160,9 +159,9 @@ void sha256_final(SHA256_CTX *ctx, BYTE hash[])
 	ctx->data[57] = ctx->bitlen >> 48;
 	ctx->data[56] = ctx->bitlen >> 56;
 	
-	printf("%d\n\n", ctx->bitlen);
+	printf("%d\n\n", ctx->data[59]);
 
-	// sha256_transform(ctx, ctx->data);
+	sha256_transform(ctx, ctx->data);
 
 	// Since this implementation uses little endian byte ordering and SHA uses big endian,
 	// reverse all the bytes when copying the final state to the output hash.
