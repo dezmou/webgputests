@@ -214,15 +214,13 @@ function App() {
             (*ctx).data[62] = (*ctx).bitlen >> 8;
             (*ctx).data[61] = (*ctx).bitlen >> 16;
             (*ctx).data[60] = (*ctx).bitlen >> 24;
-            (*ctx).data[59] = (*ctx).bitlen >> 32;
-            (*ctx).data[58] = (*ctx).bitlen >> 40;
-            (*ctx).data[57] = (*ctx).bitlen >> 48;
-            (*ctx).data[56] = (*ctx).bitlen >> 56;
-
-            result[0] = ((*ctx).data[59]);
+            // (*ctx).data[59] = (*ctx).bitlen >> 32;
+            // (*ctx).data[58] = (*ctx).bitlen >> 40;
+            // (*ctx).data[57] = (*ctx).bitlen >> 48;
+            // (*ctx).data[56] = (*ctx).bitlen >> 56;
 
 
-            // sha256_transform(ctx);
+            sha256_transform(ctx);
           
             // Since this implementation uses little endian byte ordering and SHA uses big endian,
             // reverse all the bytes when copying the final state to the output hash.
@@ -261,8 +259,8 @@ function App() {
             sha256_final(&ctx, &buf);
 
             // let index = global_id.x;
-            // result[0] = buf[25];
-            // result[1] = buf[26];
+            result[0] = buf[25];
+            result[1] = buf[26];
           }
         `
       });

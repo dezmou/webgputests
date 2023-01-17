@@ -116,11 +116,11 @@ void sha256_update(SHA256_CTX *ctx, const BYTE data[], size_t len)
 	for (i = 0; i < len; ++i) {
 		ctx->data[ctx->datalen] = data[i];
 		ctx->datalen++;
-		if (ctx->datalen == 64) {
-			sha256_transform(ctx, ctx->data);
-			ctx->bitlen += 512;
-			ctx->datalen = 0;
-		}
+		// if (ctx->datalen == 64) {
+		// 	sha256_transform(ctx, ctx->data);
+		// 	ctx->bitlen += 512;
+		// 	ctx->datalen = 0;
+		// }
 	}
 }
 
@@ -138,15 +138,15 @@ void sha256_final(SHA256_CTX *ctx, BYTE hash[])
 			ctx->data[i++] = 0;
 		
 	}
-	else {
-		ctx->data[i++] = 0x80;
-		while (i < 64) {
-			ctx->data[i] = 0x00;
-			i++;
-		}
-		sha256_transform(ctx, ctx->data);
-		memset(ctx->data, 0, 56);
-	}
+	// else {
+	// 	ctx->data[i++] = 0x80;
+	// 	while (i < 64) {
+	// 		ctx->data[i] = 0x00;
+	// 		i++;
+	// 	}
+	// 	sha256_transform(ctx, ctx->data);
+	// 	memset(ctx->data, 0, 56);
+	// }
 
 	// Append to the padding the total message's length in bits and transform.
 	ctx->bitlen += ctx->datalen * 8;
@@ -160,6 +160,7 @@ void sha256_final(SHA256_CTX *ctx, BYTE hash[])
 	ctx->data[56] = ctx->bitlen >> 56;
 	
 	printf("%d\n\n", ctx->data[59]);
+	// 237 158
 
 	sha256_transform(ctx, ctx->data);
 
