@@ -12,7 +12,7 @@ function App() {
 
       // First Matrix
 
-      const firstMatrix = new Float32Array(Array.from({length : 257}).map((e,i) => i));
+      const firstMatrix = new Int32Array(Array.from({length : 256}).map((e,i) => i));
 
       const gpuBufferFirstMatrix = device.createBuffer({
         mappedAtCreation: true,
@@ -20,7 +20,7 @@ function App() {
         usage: GPUBufferUsage.STORAGE,
       });
       const arrayBufferFirstMatrix = gpuBufferFirstMatrix.getMappedRange();
-      new Float32Array(arrayBufferFirstMatrix).set(firstMatrix);
+      new Int32Array(arrayBufferFirstMatrix).set(firstMatrix);
       gpuBufferFirstMatrix.unmap();
 
       // Result Matrix
@@ -70,13 +70,13 @@ function App() {
       const shaderModule = device.createShaderModule({
         code: /*WGSL*/`
       
-          @group(0) @binding(0) var<storage, read> firstMatrix : array<f32>;
+          @group(0) @binding(0) var<storage, read> firstMatrix : array<i32>;
           @group(0) @binding(1) var<storage, read_write> resultMatrix : array<i32>;
       
           @compute @workgroup_size(256, 1)
           fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
             let index = global_id.x;
-            resultMatrix[index] = 69;
+            resultMatrix[index] = firstMatrix[index] * 2;
           }
         `
       });
