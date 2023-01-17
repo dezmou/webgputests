@@ -5,128 +5,184 @@ function App() {
 
   useEffect(() => {
     ; (async () => {
-      async function testWebGPU() {
-        const adapter = (await navigator.gpu.requestAdapter())!;
-        const device = await adapter.requestDevice();
-        console.log(device);
-        await matrixMultiplication(device);
-      }
+      const adapter = await navigator.gpu.requestAdapter();
+      if (!adapter) { return; }
+      const device = await adapter.requestDevice();
 
-      async function matrixMultiplication(device: GPUDevice) {
-        // Result Matrix
-        const resultMatrixBufferSize = Float32Array.BYTES_PER_ELEMENT * (256 * 65535);
-        const resultMatrixBuffer = device.createBuffer({
-          size: resultMatrixBufferSize,
-          usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
-        });
 
-        const input = device.createBuffer({
-          mappedAtCreation: true,
-          size: Uint32Array.BYTES_PER_ELEMENT,
-          usage: GPUBufferUsage.STORAGE,
-        });
-        const bufferInput = input.getMappedRange();
-        new Int32Array(bufferInput).set([5000]);
-        input.unmap();
+      // First Matrix
 
-        const bindGroupLayout = device.createBindGroupLayout({
-          entries: [
-            {
-              binding: 0,
-              visibility: GPUShaderStage.COMPUTE,
-              buffer: {
-                type: 'storage',
-              },
-            },
-            {
-              binding: 1,
-              visibility: GPUShaderStage.COMPUTE,
-              buffer: {
-                type: 'read-only-storage',
-              },
-            },
-          ],
-        } as any);
+      const firstMatrix = new Float32Array([
+        2 /* rows */, 4 /* columns */,
+        1, 2, 3, 4,
+        5, 6, 7, 8
+      ]);
 
-        const bindGroup = device.createBindGroup({
-          layout: bindGroupLayout,
-          entries: [
-            {
-              binding: 0,
-              resource: {
-                buffer: resultMatrixBuffer,
-              },
-            },
-            {
-              binding: 1,
-              resource: {
-                buffer: input,
-              },
-            },
-          ],
-        });
+      const gpuBufferFirstMatrix = device.createBuffer({
+        mappedAtCreation: true,
+        size: firstMatrix.byteLength,
+        usage: GPUBufferUsage.STORAGE,
+      });
+      const arrayBufferFirstMatrix = gpuBufferFirstMatrix.getMappedRange();
+      new Float32Array(arrayBufferFirstMatrix).set(firstMatrix);
+      gpuBufferFirstMatrix.unmap();
 
-        const shaderModule = device.createShaderModule({
-          code: /* wgsl */`
-            @group(0) @binding(0) var<storage, read_write> resultMatrix : array<u32>;
-            @group(0) @binding(1) var<storage> input : array<u32>;
-      
-            @compute @workgroup_size(256)
-            fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
-              var chien : i32 = 485;
-              for (var i=0; i<5784;i++){
-                chien += i;
-                if (chien % 4500 == 0) {
-                  chien = 0;
-                }
-              }
-              resultMatrix[global_id.x] = bitcast<u32>(input[0] + global_id.x + bitcast<u32>( chien));
+
+      // Second Matrix
+
+      const secondMatrix = new Float32Array([
+        4 /* rows */, 2 /* columns */,
+        1, 2,
+        3, 4,
+        5, 6,
+        7, 8
+      ]);
+
+      const gpuBufferSecondMatrix = device.createBuffer({
+        mappedAtCreation: true,
+        size: secondMatrix.byteLength,
+        usage: GPUBufferUsage.STORAGE,
+      });
+      const arrayBufferSecondMatrix = gpuBufferSecondMatrix.getMappedRange();
+      new Float32Array(arrayBufferSecondMatrix).set(secondMatrix);
+      gpuBufferSecondMatrix.unmap();
+
+
+      // Result Matrix
+
+      const resultMatrixBufferSize = Float32Array.BYTES_PER_ELEMENT * (2 + firstMatrix[0] * secondMatrix[1]);
+      const resultMatrixBuffer = device.createBuffer({
+        size: resultMatrixBufferSize,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
+      });
+
+
+      const bindGroupLayout = (device as any).createBindGroupLayout({
+        entries: [
+          {
+            binding: 0,
+            visibility: GPUShaderStage.COMPUTE,
+            buffer: {
+              type: "read-only-storage"
             }
-          `,
-        });
-
-        const computePipeline = device.createComputePipeline({
-          layout: device.createPipelineLayout({
-            bindGroupLayouts: [bindGroupLayout],
-          }),
-          compute: {
-            module: shaderModule,
-            entryPoint: 'main',
           },
-        });
+          {
+            binding: 1,
+            visibility: GPUShaderStage.COMPUTE,
+            buffer: {
+              type: "read-only-storage"
+            }
+          },
+          {
+            binding: 2,
+            visibility: GPUShaderStage.COMPUTE,
+            buffer: {
+              type: "storage"
+            }
+          }
+        ]
+      });
 
-        const commandEncoder = device.createCommandEncoder();
-        const passEncoder = commandEncoder.beginComputePass();
-        passEncoder.setPipeline(computePipeline);
-        passEncoder.setBindGroup(0, bindGroup);
-        passEncoder.dispatchWorkgroups(65535);
-        passEncoder.end();
+      const bindGroup = device.createBindGroup({
+        layout: bindGroupLayout,
+        entries: [
+          {
+            binding: 0,
+            resource: {
+              buffer: gpuBufferFirstMatrix
+            }
+          },
+          {
+            binding: 1,
+            resource: {
+              buffer: gpuBufferSecondMatrix
+            }
+          },
+          {
+            binding: 2,
+            resource: {
+              buffer: resultMatrixBuffer
+            }
+          }
+        ]
+      });
 
-        const gpuReadBuffer = device.createBuffer({
-          size: resultMatrixBufferSize,
-          usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
-        });
+      const shaderModule = device.createShaderModule({
+        code: /*WGSL*/`
+          struct Matrix {
+            size : vec2<f32>,
+            numbers: array<f32>,
+          }
+      
+          @group(0) @binding(0) var<storage, read> firstMatrix : Matrix;
+          @group(0) @binding(1) var<storage, read> secondMatrix : Matrix;
+          @group(0) @binding(2) var<storage, read_write> resultMatrix : Matrix;
+      
+          @compute @workgroup_size(8, 8)
+          fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
+            // Guard against out-of-bounds work group sizes
+            if (global_id.x >= u32(firstMatrix.size.x) || global_id.y >= u32(secondMatrix.size.y)) {
+              return;
+            }
+      
+            resultMatrix.size = vec2(firstMatrix.size.x, secondMatrix.size.y);
+      
+            let resultCell = vec2(global_id.x, global_id.y);
+            var result = 0.0;
+            for (var i = 0u; i < u32(firstMatrix.size.y); i = i + 1u) {
+              let a = i + resultCell.x * u32(firstMatrix.size.y);
+              let b = resultCell.y + i * u32(secondMatrix.size.y);
+              result = result + firstMatrix.numbers[a] * secondMatrix.numbers[b];
+            }
+      
+            let index = resultCell.y + resultCell.x * u32(secondMatrix.size.y);
+            resultMatrix.numbers[index] = result;
+          }
+        `
+      });
 
-        commandEncoder.copyBufferToBuffer(
-          resultMatrixBuffer /* source buffer */,
-          0 /* source offset */,
-          gpuReadBuffer /* destination buffer */,
-          0 /* destination offset */,
-          resultMatrixBufferSize /* size */
-        );
+      const computePipeline = device.createComputePipeline({
+        layout: device.createPipelineLayout({
+          bindGroupLayouts: [bindGroupLayout]
+        }),
+        compute: {
+          module: shaderModule,
+          entryPoint: "main"
+        }
+      });
 
-        const gpuCommands = commandEncoder.finish();
-        const time = performance.now()
-        device.queue.submit([gpuCommands]);
-        await gpuReadBuffer.mapAsync(GPUMapMode.READ);
-        console.log(performance.now() - time);
+      const commandEncoder = device.createCommandEncoder();
 
-        const arrayBuffer = gpuReadBuffer.getMappedRange();
-        const res = new Int32Array(arrayBuffer);
-        console.log(res);
-      }
+      const passEncoder = commandEncoder.beginComputePass();
+      passEncoder.setPipeline(computePipeline);
+      passEncoder.setBindGroup(0, bindGroup);
+      const workgroupCountX = Math.ceil(firstMatrix[0] / 8);
+      const workgroupCountY = Math.ceil(secondMatrix[1] / 8);
+      passEncoder.dispatchWorkgroups(workgroupCountX, workgroupCountY);
+      passEncoder.end();
 
-      testWebGPU();
+      // Get a GPU buffer for reading in an unmapped state.
+      const gpuReadBuffer = device.createBuffer({
+        size: resultMatrixBufferSize,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+      });
+
+      // Encode commands for copying buffer to buffer.
+      commandEncoder.copyBufferToBuffer(
+        resultMatrixBuffer /* source buffer */,
+        0 /* source offset */,
+        gpuReadBuffer /* destination buffer */,
+        0 /* destination offset */,
+        resultMatrixBufferSize /* size */
+      );
+
+      // Submit GPU commands.
+      const gpuCommands = commandEncoder.finish();
+      device.queue.submit([gpuCommands]);
+
+      await gpuReadBuffer.mapAsync(GPUMapMode.READ);
+      const arrayBuffer = gpuReadBuffer.getMappedRange();
+      console.log(new Float32Array(arrayBuffer));
     })()
   }, [])
   return <>

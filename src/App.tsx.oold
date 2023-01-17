@@ -1,0 +1,78 @@
+import React, { useEffect, useRef, useState } from 'react';
+
+export const makeId = () => {
+  return Math.floor((1 + Math.random()) * 0x10000000000000)
+    .toString(32)
+}
+
+const state = {
+  chien: Date.now(),
+}
+
+const createRenderContext = () => {
+  const rendersComp: { [key: string]: { [key: string]: () => void } } = {}
+  const rendersItems: { [key: string]: () => void } = {}
+
+  const renderItem = (id: string) => {
+    if (!rendersItems[id]) return;
+    rendersItems[id]();
+  }
+
+  const renderAll = (name: string) => {
+    if (!rendersComp[name]) return;
+    for (let comp of Object.values(rendersComp[name])) {
+      comp();
+    }
+  }
+
+  const useRender = (name: string) => {
+    const [chien, setChien] = useState(0);
+    const id = useRef(makeId());
+
+    useEffect(() => {
+      if (!rendersComp[name]) {
+        rendersComp[name] = {}
+      }
+      const renderAction = () => setChien(e => e + 1)
+      rendersComp[name][id.current] = renderAction;
+      rendersItems[id.current] = renderAction;
+
+      return () => {
+        delete rendersComp[name][id.current];
+        delete rendersItems[id.current];
+      }
+    }, [])
+
+    return [() => {
+      setChien(e => e + 1);
+    }, id.current];
+  }
+
+  return {
+    useRender,
+    renderItem,
+    renderAll,
+  }
+}
+
+const { useRender, renderItem, renderAll } = createRenderContext();
+
+setInterval(() => {
+  state.chien = Date.now();
+  renderAll("global")
+}, 400)
+
+function App() {
+  const [render, id] = useRender("global");
+
+  useEffect(() => {
+
+  }, [])
+
+  return <>
+    {state.chien}
+  </>
+    ;
+}
+
+export default App;
