@@ -20,12 +20,14 @@
 int main()
 {
 	SHA256_CTX ctx;
-    BYTE text1[] = {0x69, 0x69};
+    // BYTE text1[] = {0x01, 0x02};
+    BYTE text1[] = {1, 2};
 	BYTE buf[SHA256_BLOCK_SIZE];
 	sha256_init(&ctx);
 	sha256_update(&ctx, text1, 2);
 	sha256_final(&ctx, buf);
-    printf("%02x%02x%02x%02x\n", buf[0], buf[1], buf[2], buf[3]);
+    // printf("%02x%02x%02x%02x\n", buf[0], buf[1], buf[2], buf[3]);
+    printf("%d %d\n", buf[0], buf[1]);
 
 	return(0);
 }
