@@ -79,8 +79,6 @@ function App() {
           @group(0) @binding(0) var<storage, read> data : array<u32>;
           @group(0) @binding(1) var<storage, read_write> result : array<u32>;
 
-          const LEN = 2;
-
           const WORD = array<u32, 64> (
             0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
             0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
@@ -92,23 +90,20 @@ function App() {
             0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
           );
 
-          // fn sha256_update(ctx : SHA256_CTX , len : u32)
-          // {
-          //   // var i : u32 = 0;
-          //   for (var i: u32 = 0; i < len; i++){
-
-          //   }
-
-          //   // for (i = 0; i < len; ++i) {
-          //   //   ctx->data[ctx->datalen] = data[i];
-          //   //   ctx->datalen++;
-          //   //   if (ctx->datalen == 64) {
-          //   //     sha256_transform(ctx, ctx->data);
-          //   //     ctx->bitlen += 512;
-          //   //     ctx->datalen = 0;
-          //   //   }
-          //   // }
-          // }
+          fn sha256_update(ctx : ptr<function, SHA256_CTX> , len : u32)
+          {
+            (*ctx).datalen = 12;
+            // for (var i: u32 = 0; i < len; i++) {
+              
+            //   ctx.data[ctx.datalen] = data[i];
+            //   ctx.datalen ++;
+            //   if (ctx.datalen == 64){
+            //   //     sha256_transform(ctx, ctx->data);
+            //   ctx.bitlen += 512;
+            //   ctx.datalen = 0;
+            //   }
+            // }
+          }
           
 
       
@@ -129,25 +124,23 @@ function App() {
             ctx.state[7] = 0x5be0cd19;
 
 
+            var len : u32 = 2;
+            sha256_update(&ctx, len);
             // sha256_update
-            for (var i: u32 = 0; i < LEN; i++){
-              ctx.data[ctx.datalen] = data[i];
-              ctx.datalen ++;
-            }
-            // for (i = 0; i < len; ++i) {
-            //   ctx->data[ctx->datalen] = data[i];
-            //   ctx->datalen++;
-            //   if (ctx->datalen == 64) {
-            //     sha256_transform(ctx, ctx->data);
-            //     ctx->bitlen += 512;
-            //     ctx->datalen = 0;
+
+            // for (var i: u32 = 0; i < len; i++) {
+            //   ctx.data[ctx.datalen] = data[i];
+            //   ctx.datalen ++;
+            //   if (ctx.datalen == 64){
+            //   //     sha256_transform(ctx, ctx->data);
+            //   ctx.bitlen += 512;
+            //   ctx.datalen = 0;
             //   }
             // }
 
-
-
             let index = global_id.x;
-            result[index] = data[index] * 2;
+            result[0] = ctx.datalen;
+            // result[index] = data[index] * 2;
           }
         `
       });
