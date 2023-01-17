@@ -12,8 +12,7 @@ function App() {
 
       // First Matrix
 
-      const firstMatrix = new Uint32Array([0x69,0x69]);
-
+      const firstMatrix = new Uint32Array([0x69,0x69,0x69]);
       const gpuBufferFirstMatrix = device.createBuffer({
         mappedAtCreation: true,
         size: firstMatrix.byteLength,
@@ -22,6 +21,19 @@ function App() {
       const arrayBufferFirstMatrix = gpuBufferFirstMatrix.getMappedRange();
       new Int32Array(arrayBufferFirstMatrix).set(firstMatrix);
       gpuBufferFirstMatrix.unmap();
+
+
+      // size
+      const size = new Uint32Array([firstMatrix.length]);
+      const gpuBufferSize = device.createBuffer({
+        mappedAtCreation: true,
+        size: Int32Array.BYTES_PER_ELEMENT,
+        usage: GPUBufferUsage.STORAGE,
+      });
+      const arrayBufferSize = gpuBufferSize.getMappedRange();
+      new Int32Array(arrayBufferSize).set(size);
+      gpuBufferSize.unmap();
+
 
       // Result Matrix
       const resultMatrixBufferSize = Uint32Array.BYTES_PER_ELEMENT * 32;
@@ -43,6 +55,13 @@ function App() {
             binding: 1,
             visibility: GPUShaderStage.COMPUTE,
             buffer: {
+              type: "read-only-storage"
+            }
+          },
+          {
+            binding: 2,
+            visibility: GPUShaderStage.COMPUTE,
+            buffer: {
               type: "storage"
             }
           }
@@ -61,6 +80,12 @@ function App() {
           {
             binding: 1,
             resource: {
+              buffer: gpuBufferSize
+            }
+          },
+          {
+            binding: 2,
+            resource: {
               buffer: resultMatrixBuffer
             }
           }
@@ -78,7 +103,8 @@ function App() {
           };
 
           @group(0) @binding(0) var<storage, read> text1 : array<u32>;
-          @group(0) @binding(1) var<storage, read_write> result : array<u32>;
+          @group(0) @binding(1) var<storage, read> size : array<u32>;
+          @group(0) @binding(2) var<storage, read_write> result : array<u32>;
 
           const SHA256_BLOCK_SIZE = 32;
 
@@ -92,7 +118,6 @@ function App() {
             0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
             0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
           );
-
 
           fn ROTLEFT(a : u32, b : u32) -> u32{return (((a) << (b)) | ((a) >> (32-(b))));}
           fn ROTRIGHT(a : u32, b : u32) -> u32{return (((a) >> (b)) | ((a) << (32-(b))));}
@@ -254,8 +279,8 @@ function App() {
             ctx.state[7] = 0x5be0cd19;
 
 
-            var len : u32 = 2;
-            sha256_update(&ctx, len);
+            // var len : u32 = 2;
+            sha256_update(&ctx, size[0]);
             sha256_final(&ctx, &buf);
 
             // let index = global_id.x;
@@ -306,6 +331,7 @@ function App() {
 
       await gpuReadBuffer.mapAsync(GPUMapMode.READ);
       const arrayBuffer = gpuReadBuffer.getMappedRange();
+      
       let str = "";
       for (let value of Array.from(new Uint32Array(arrayBuffer))){
         str += value.toString(16);
