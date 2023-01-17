@@ -12,7 +12,7 @@ function App() {
 
       // First Matrix
 
-      const firstMatrix = new Uint32Array([5,5]);
+      const firstMatrix = new Uint32Array([0x69,0x69]);
 
       const gpuBufferFirstMatrix = device.createBuffer({
         mappedAtCreation: true,
@@ -24,7 +24,7 @@ function App() {
       gpuBufferFirstMatrix.unmap();
 
       // Result Matrix
-      const resultMatrixBufferSize = firstMatrix.byteLength;
+      const resultMatrixBufferSize = Uint32Array.BYTES_PER_ELEMENT * 32;
       const resultMatrixBuffer = device.createBuffer({
         size: resultMatrixBufferSize,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
@@ -259,8 +259,9 @@ function App() {
             sha256_final(&ctx, &buf);
 
             // let index = global_id.x;
-            result[0] = buf[25];
-            result[1] = buf[26];
+            for (var i=0; i < 32; i++) {
+              result[i] = buf[i];
+            }
           }
         `
       });
@@ -305,7 +306,12 @@ function App() {
 
       await gpuReadBuffer.mapAsync(GPUMapMode.READ);
       const arrayBuffer = gpuReadBuffer.getMappedRange();
-      console.log(new Uint32Array(arrayBuffer));
+      let str = "";
+      for (let value of Array.from(new Uint32Array(arrayBuffer))){
+        str += value.toString(16);
+      }
+      console.log(str);
+      // console.log(new Uint32Array(arrayBuffer));
     })()
   }, [])
   return <>
