@@ -135,8 +135,6 @@ function App() {
               i++;
             }
 
-
-
             a = (*ctx).state[0];
             b = (*ctx).state[1];
             c = (*ctx).state[2];
