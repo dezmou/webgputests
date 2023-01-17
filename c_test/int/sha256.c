@@ -120,14 +120,18 @@ void sha256_final(SHA256_CTX *ctx, BYTE hash[])
 
 	// Pad whatever data is left in the buffer.
 	if (ctx->datalen < 56) {
-		ctx->data[i++] = 0x80;
+		ctx->data[i] = 0x80;
+		i++;
 		while (i < 56)
-			ctx->data[i++] = 0x00;
+			ctx->data[i++] = 0;
+		
 	}
 	else {
 		ctx->data[i++] = 0x80;
-		while (i < 64)
-			ctx->data[i++] = 0x00;
+		while (i < 64) {
+			ctx->data[i] = 0x00;
+			i++;
+		}
 		sha256_transform(ctx, ctx->data);
 		memset(ctx->data, 0, 56);
 	}
@@ -142,7 +146,7 @@ void sha256_final(SHA256_CTX *ctx, BYTE hash[])
 	ctx->data[58] = ctx->bitlen >> 40;
 	ctx->data[57] = ctx->bitlen >> 48;
 	ctx->data[56] = ctx->bitlen >> 56;
-	sha256_transform(ctx, ctx->data);
+	// sha256_transform(ctx, ctx->data);
 
 	// Since this implementation uses little endian byte ordering and SHA uses big endian,
 	// reverse all the bytes when copying the final state to the output hash.
@@ -157,5 +161,5 @@ void sha256_final(SHA256_CTX *ctx, BYTE hash[])
 		hash[i + 28] = (ctx->state[7] >> (24 - i * 8)) & 0x000000ff;
 	}
 
-    printf("%u\n%u\n", hash[0], hash[1]);
+    printf("%u\n%u\n", hash[25], hash[26]);
 }

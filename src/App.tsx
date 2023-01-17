@@ -12,7 +12,7 @@ function App() {
 
       // First Matrix
 
-      const firstMatrix = new Int32Array([1,2]);
+      const firstMatrix = new Uint32Array([5,5]);
 
       const gpuBufferFirstMatrix = device.createBuffer({
         mappedAtCreation: true,
@@ -96,14 +96,13 @@ function App() {
 
           fn ROTLEFT(a : u32, b : u32) -> u32{return (((a) << (b)) | ((a) >> (32-(b))));}
           fn ROTRIGHT(a : u32, b : u32) -> u32{return (((a) >> (b)) | ((a) << (32-(b))));}
+
           fn CH(x : u32, y : u32, z : u32) -> u32{return (((x) & (y)) ^ (~(x) & (z)));}
           fn MAJ(x : u32, y : u32, z : u32) -> u32{return (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)));}
           fn EP0(x : u32) -> u32{return (ROTRIGHT(x,2) ^ ROTRIGHT(x,13) ^ ROTRIGHT(x,22));}
           fn EP1(x : u32) -> u32{return (ROTRIGHT(x,6) ^ ROTRIGHT(x,11) ^ ROTRIGHT(x,25));}
           fn SIG0(x : u32) -> u32{return (ROTRIGHT(x,7) ^ ROTRIGHT(x,18) ^ ((x) >> 3));}
           fn SIG1(x : u32) -> u32{return (ROTRIGHT(x,17) ^ ROTRIGHT(x,19) ^ ((x) >> 10));}
-
-          
 
           fn sha256_transform(ctx : ptr<function, SHA256_CTX>)
           {
@@ -166,15 +165,15 @@ function App() {
           }
 
 
-          fn sha256_update(ctx : ptr<function, SHA256_CTX> , len : u32)
+          fn sha256_update(ctx : ptr<function, SHA256_CTX>, len : u32)
           {
             for (var i: u32 = 0; i < len; i++) {
               (*ctx).data[(*ctx).datalen] = text1[i];
               (*ctx).datalen ++;
-              if ((*ctx).datalen == 64){
-                  sha256_transform(ctx);
-              (*ctx).bitlen += 512;
-              (*ctx).datalen = 0;
+              if ((*ctx).datalen == 64) {
+                sha256_transform(ctx);
+                (*ctx).bitlen += 512;
+                (*ctx).datalen = 0;
               }
             }
           }
@@ -188,9 +187,10 @@ function App() {
               (*ctx).data[i] = 0x80;
               i++;
               while (i < 56) {
-                (*ctx).data[i] = 0x00;
+                (*ctx).data[i] = 0;
                 i++;
               }
+
             }
             else {
               (*ctx).data[i] = 0x80;
@@ -215,7 +215,7 @@ function App() {
             (*ctx).data[58] = (*ctx).bitlen >> 40;
             (*ctx).data[57] = (*ctx).bitlen >> 48;
             (*ctx).data[56] = (*ctx).bitlen >> 56;
-            sha256_transform(ctx);
+            // sha256_transform(ctx);
           
             // Since this implementation uses little endian byte ordering and SHA uses big endian,
             // reverse all the bytes when copying the final state to the output hash.
@@ -254,8 +254,8 @@ function App() {
             sha256_final(&ctx, &buf);
 
             // let index = global_id.x;
-            result[0] = buf[0];
-            result[1] = buf[1];
+            result[0] = buf[25];
+            result[1] = buf[26];
           }
         `
       });

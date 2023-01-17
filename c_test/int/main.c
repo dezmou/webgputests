@@ -21,10 +21,8 @@ int main()
 {
 	SHA256_CTX ctx;
     // BYTE text1[] = {0x01, 0x02};
-    BYTE text1[] = {1, 2};
+    BYTE text1[] = {5, 5};
 	BYTE buf[SHA256_BLOCK_SIZE];
-    buf[0] = 0;
-    buf[1] = 0;
 	sha256_init(&ctx);
 	sha256_update(&ctx, text1, 2);
 	sha256_final(&ctx, buf);
