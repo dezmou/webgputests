@@ -60,7 +60,7 @@ const sha256hash_t initial_value = {
 	{0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19}
 };
 
-int* sha256padding(int* message, unsigned int* num_bytes){
+int* sha256padding(int* message, uint64_t* num_bytes){
 
 	/* Parses the message and returns a 512 bit padded message 
 		char* message: the messages to be parsed
@@ -69,8 +69,8 @@ int* sha256padding(int* message, unsigned int* num_bytes){
 	*/
 
 	/* Number of bits of the original message */
-	unsigned int num_bytes_message = 2;
-	unsigned int len = 8*num_bytes_message;
+	uint64_t num_bytes_message = 2;
+	uint64_t len = 8*num_bytes_message;
 	
 
 	/* Secure Hash Standards Section 5.1.1
@@ -78,7 +78,7 @@ int* sha256padding(int* message, unsigned int* num_bytes){
 	int mod_lhs = (len+1)%512;
 	uint16_t k = (448-mod_lhs>=0)?(448-mod_lhs):(448-mod_lhs)+512;
 
-	unsigned int padded_length = (len + 1 + k + 64)/8;
+	uint64_t padded_length = (len + 1 + k + 64)/8;
 	unsigned int* padded_message = malloc(sizeof(unsigned int)*padded_length);
 	
 	int64_t i;
