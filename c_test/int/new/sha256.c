@@ -113,16 +113,16 @@ int* sha256padding(int* message, uint64_t* num_bytes){
 	return padded_message;
 }
 
-msg_block_t* create_message_block(int* padded_message, uint64_t len){
+msg_block_t* create_message_block(int* padded_message, uint32_t len){
 
 	/* Allocate space for the message block.
 	   Should be exactly the number of bytes
 	   of a message block times
 	   the number of 512 bit blocks in the message */
-	uint64_t number_of_512bit_blocks = (len*8)/512;
+	uint32_t number_of_512bit_blocks = (len*8)/512;
 	msg_block_t* message_block = malloc(sizeof(msg_block_t)*number_of_512bit_blocks);
 
-	for( uint64_t block = 0; block < number_of_512bit_blocks; block++){
+	for( uint32_t block = 0; block < number_of_512bit_blocks; block++){
 		
 		for( int i = 0; i < 16; i++){
 			
