@@ -82,7 +82,7 @@ function App() {
 
           const SHA256_BLOCK_SIZE = 32;
 
-          const WORD = array<u32, 64> (
+          const k = array<u32, 64> (
             0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
             0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
             0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
@@ -93,46 +93,81 @@ function App() {
             0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
           );
 
-/*********************** FUNCTION DEFINITIONS ***********************/
+
+          fn ROTLEFT(a : u32, b : u32) -> u32{return (((a) << (b)) | ((a) >> (32-(b))));}
+          fn ROTRIGHT(a : u32, b : u32) -> u32{return (((a) >> (b)) | ((a) << (32-(b))));}
+          fn CH(x : u32, y : u32, z : u32) -> u32{return (((x) & (y)) ^ (~(x) & (z)));}
+          fn MAJ(x : u32, y : u32, z : u32) -> u32{return (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)));}
+          fn EP0(x : u32) -> u32{return (ROTRIGHT(x,2) ^ ROTRIGHT(x,13) ^ ROTRIGHT(x,22));}
+          fn EP1(x : u32) -> u32{return (ROTRIGHT(x,6) ^ ROTRIGHT(x,11) ^ ROTRIGHT(x,25));}
+          fn SIG0(x : u32) -> u32{return (ROTRIGHT(x,7) ^ ROTRIGHT(x,18) ^ ((x) >> 3));}
+          fn SIG1(x : u32) -> u32{return (ROTRIGHT(x,17) ^ ROTRIGHT(x,19) ^ ((x) >> 10));}
+
+          
+
           fn sha256_transform(ctx : ptr<function, SHA256_CTX>)
           {
             // WORD a, b, c, d, e, f, g, h, i, j, t1, t2, m[64];
+            var a : u32;
+            var b : u32;
+            var c : u32;
+            var d : u32;
+            var e : u32;
+            var f : u32;
+            var g : u32;
+            var h : u32;
+            var i : u32 = 0;
+            var j : u32 = 0;
+            var t1 : u32;
+            var t2 : u32;
+            var m : array<u32, 64> ;
 
-            // for (i = 0, j = 0; i < 16; ++i, j += 4)
-            //   m[i] = (data[j] << 24) | (data[j + 1] << 16) | (data[j + 2] << 8) | (data[j + 3]);
-            // for ( ; i < 64; ++i)
-            //   m[i] = SIG1(m[i - 2]) + m[i - 7] + SIG0(m[i - 15]) + m[i - 16];
+            // var ii = 0;
+            // var ji = 0;
+            // for (var i = 0, var j = 0; i < 16; i++, j += 4){
+            while(i < 16) {
+              m[i] = ((*ctx).data[j] << 24) | ((*ctx).data[j + 1] << 16) | ((*ctx).data[j + 2] << 8) | ((*ctx).data[j + 3]);
+              i++;
+              j += 4;
+            }
+            while(i < 64){
+          		m[i] = SIG1(m[i - 2]) + m[i - 7] + SIG0(m[i - 15]) + m[i - 16];
+              i++;
+            }
 
-            // a = (*ctx).state[0];
-            // b = (*ctx).state[1];
-            // c = (*ctx).state[2];
-            // d = (*ctx).state[3];
-            // e = (*ctx).state[4];
-            // f = (*ctx).state[5];
-            // g = (*ctx).state[6];
-            // h = (*ctx).state[7];
 
-            // for (i = 0; i < 64; ++i) {
-            //   t1 = h + EP1(e) + CH(e,f,g) + k[i] + m[i];
-            //   t2 = EP0(a) + MAJ(a,b,c);
-            //   h = g;
-            //   g = f;
-            //   f = e;
-            //   e = d + t1;
-            //   d = c;
-            //   c = b;
-            //   b = a;
-            //   a = t1 + t2;
-            // }
 
-            // (*ctx).state[0] += a;
-            // (*ctx).state[1] += b;
-            // (*ctx).state[2] += c;
-            // (*ctx).state[3] += d;
-            // (*ctx).state[4] += e;
-            // (*ctx).state[5] += f;
-            // (*ctx).state[6] += g;
-            // (*ctx).state[7] += h;
+            a = (*ctx).state[0];
+            b = (*ctx).state[1];
+            c = (*ctx).state[2];
+            d = (*ctx).state[3];
+            e = (*ctx).state[4];
+            f = (*ctx).state[5];
+            g = (*ctx).state[6];
+            h = (*ctx).state[7];
+
+            i = 0;
+            for (; i < 64; i++) {
+              t1 = h + EP1(e) + CH(e,f,g) + k[i] + m[i];
+              t2 = EP0(a) + MAJ(a,b,c);
+              h = g;
+              g = f;
+              f = e;
+              e = d + t1;
+              d = c;
+              c = b;
+              b = a;
+              a = t1 + t2;
+            }
+
+            (*ctx).state[0] += a;
+            (*ctx).state[1] += b;
+            (*ctx).state[2] += c;
+            (*ctx).state[3] += d;
+            (*ctx).state[4] += e;
+            (*ctx).state[5] += f;
+            (*ctx).state[6] += g;
+            (*ctx).state[7] += h;
           }
 
 
