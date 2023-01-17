@@ -12,7 +12,7 @@ function App() {
 
       // First Matrix
 
-      const firstMatrix = new Int32Array(Array.from({length : 256}).map((e,i) => i + 1));
+      const firstMatrix = new Int32Array([69,69]);
 
       const gpuBufferFirstMatrix = device.createBuffer({
         mappedAtCreation: true,
@@ -69,12 +69,21 @@ function App() {
 
       const shaderModule = device.createShaderModule({
         code: /*WGSL*/`
-      
+        struct SHA256_CTX {
+          data : array<u32, 64>,
+          datalen : u32,
+          bitlen : u32,
+          state : array<u32, 8>,
+        };
+        
+
           @group(0) @binding(0) var<storage, read> firstMatrix : array<i32>;
           @group(0) @binding(1) var<storage, read_write> resultMatrix : array<i32>;
       
           @compute @workgroup_size(1, 1)
           fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
+            var ctx : SHA256_CTX;
+            
             let index = global_id.x;
             resultMatrix[index] = firstMatrix[index] * 2;
           }
