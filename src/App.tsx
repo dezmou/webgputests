@@ -121,12 +121,14 @@ function App() {
             var t2 : u32;
             var m : array<u32, 64> ;
 
+
             while(i < 16) {
               m[i] = ((*ctx).data[j] << 24) | ((*ctx).data[j + 1] << 16) | ((*ctx).data[j + 2] << 8) | ((*ctx).data[j + 3]);
               i++;
               j += 4;
-            }
-            while(i < 64){
+            }            
+
+            while(i < 64) {
           		m[i] = SIG1(m[i - 2]) + m[i - 7] + SIG0(m[i - 15]) + m[i - 16];
               i++;
             }
@@ -153,6 +155,7 @@ function App() {
               b = a;
               a = t1 + t2;
             }
+
 
             (*ctx).state[0] += a;
             (*ctx).state[1] += b;
@@ -215,6 +218,10 @@ function App() {
             (*ctx).data[58] = (*ctx).bitlen >> 40;
             (*ctx).data[57] = (*ctx).bitlen >> 48;
             (*ctx).data[56] = (*ctx).bitlen >> 56;
+
+            result[0] = ((*ctx).bitlen);
+
+
             // sha256_transform(ctx);
           
             // Since this implementation uses little endian byte ordering and SHA uses big endian,
@@ -254,8 +261,8 @@ function App() {
             sha256_final(&ctx, &buf);
 
             // let index = global_id.x;
-            result[0] = buf[25];
-            result[1] = buf[26];
+            // result[0] = buf[25];
+            // result[1] = buf[26];
           }
         `
       });
