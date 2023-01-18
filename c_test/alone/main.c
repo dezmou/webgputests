@@ -146,19 +146,12 @@ void SHA256Final(SHA256_CTX *ctx, uint hash[])
 uint* SHA256(uint* data) {
 	SHA256_CTX ctx;
 	uint *hash = malloc(sizeof(uint) * 32);
-	// uint* hashStr = malloc(65 * sizeof(uint));
-	// strcpy(hashStr, "");
 
 	SHA256Init(&ctx);
 	SHA256Update(&ctx, data, 2);
 	SHA256Final(&ctx, hash);
 
     return hash;
-	// uint s[3];
-	// for (int i = 0; i < 32; i++) {
-	// 	sprintf(s, "%02x", hash[i]);
-	// 	strcat(hashStr, s);
-	// }
 }
 
 int main() {
