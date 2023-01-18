@@ -12,8 +12,10 @@ function App() {
 
       // First Matrix
 
-      const firstMatrix = new Uint32Array([5,5]);
+      const fromHexString = (hexString:string) => Uint32Array.from((hexString.match(/.{1,2}/g) as any[]) .map((byte) => parseInt(byte, 16)));
 
+      // const firstMatrix = new Uint32Array([0x69,0x69,0x69]);
+      const firstMatrix = fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
       const gpuBufferFirstMatrix = device.createBuffer({
         mappedAtCreation: true,
         size: firstMatrix.byteLength,
@@ -23,8 +25,21 @@ function App() {
       new Int32Array(arrayBufferFirstMatrix).set(firstMatrix);
       gpuBufferFirstMatrix.unmap();
 
+
+      // size
+      const size = new Uint32Array([firstMatrix.length]);
+      const gpuBufferSize = device.createBuffer({
+        mappedAtCreation: true,
+        size: Int32Array.BYTES_PER_ELEMENT,
+        usage: GPUBufferUsage.STORAGE,
+      });
+      const arrayBufferSize = gpuBufferSize.getMappedRange();
+      new Int32Array(arrayBufferSize).set(size);
+      gpuBufferSize.unmap();
+
+
       // Result Matrix
-      const resultMatrixBufferSize = firstMatrix.byteLength;
+      const resultMatrixBufferSize = Uint32Array.BYTES_PER_ELEMENT * 32;
       const resultMatrixBuffer = device.createBuffer({
         size: resultMatrixBufferSize,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
@@ -41,6 +56,13 @@ function App() {
           },
           {
             binding: 1,
+            visibility: GPUShaderStage.COMPUTE,
+            buffer: {
+              type: "read-only-storage"
+            }
+          },
+          {
+            binding: 2,
             visibility: GPUShaderStage.COMPUTE,
             buffer: {
               type: "storage"
@@ -61,6 +83,12 @@ function App() {
           {
             binding: 1,
             resource: {
+              buffer: gpuBufferSize
+            }
+          },
+          {
+            binding: 2,
+            resource: {
               buffer: resultMatrixBuffer
             }
           }
@@ -78,7 +106,8 @@ function App() {
           };
 
           @group(0) @binding(0) var<storage, read> text1 : array<u32>;
-          @group(0) @binding(1) var<storage, read_write> result : array<u32>;
+          @group(0) @binding(1) var<storage, read> size : array<u32>;
+          @group(0) @binding(2) var<storage, read_write> result : array<u32>;
 
           const SHA256_BLOCK_SIZE = 32;
 
@@ -92,7 +121,6 @@ function App() {
             0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
             0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
           );
-
 
           fn ROTLEFT(a : u32, b : u32) -> u32{return (((a) << (b)) | ((a) >> (32-(b))));}
           fn ROTRIGHT(a : u32, b : u32) -> u32{return (((a) >> (b)) | ((a) << (32-(b))));}
@@ -214,15 +242,13 @@ function App() {
             (*ctx).data[62] = (*ctx).bitlen >> 8;
             (*ctx).data[61] = (*ctx).bitlen >> 16;
             (*ctx).data[60] = (*ctx).bitlen >> 24;
-            (*ctx).data[59] = (*ctx).bitlen >> 32;
-            (*ctx).data[58] = (*ctx).bitlen >> 40;
-            (*ctx).data[57] = (*ctx).bitlen >> 48;
-            (*ctx).data[56] = (*ctx).bitlen >> 56;
-
-            result[0] = ((*ctx).data[59]);
+            // (*ctx).data[59] = (*ctx).bitlen >> 32;
+            // (*ctx).data[58] = (*ctx).bitlen >> 40;
+            // (*ctx).data[57] = (*ctx).bitlen >> 48;
+            // (*ctx).data[56] = (*ctx).bitlen >> 56;
 
 
-            // sha256_transform(ctx);
+            sha256_transform(ctx);
           
             // Since this implementation uses little endian byte ordering and SHA uses big endian,
             // reverse all the bytes when copying the final state to the output hash.
@@ -255,14 +281,13 @@ function App() {
             ctx.state[6] = 0x1f83d9ab;
             ctx.state[7] = 0x5be0cd19;
 
-
-            var len : u32 = 2;
-            sha256_update(&ctx, len);
+            sha256_update(&ctx, size[0]);
             sha256_final(&ctx, &buf);
 
             // let index = global_id.x;
-            // result[0] = buf[25];
-            // result[1] = buf[26];
+            for (var i=0; i < 32; i++) {
+              result[i] = buf[i];
+            }
           }
         `
       });
@@ -307,7 +332,13 @@ function App() {
 
       await gpuReadBuffer.mapAsync(GPUMapMode.READ);
       const arrayBuffer = gpuReadBuffer.getMappedRange();
-      console.log(new Uint32Array(arrayBuffer));
+      
+      let str = "";
+      for (let value of Array.from(new Uint32Array(arrayBuffer))){
+        str += value.toString(16);
+      }
+      console.log(str);
+      // console.log(new Uint32Array(arrayBuffer));
     })()
   }, [])
   return <>
