@@ -15,7 +15,8 @@ function App() {
       const fromHexString = (hexString:string) => Uint32Array.from((hexString.match(/.{1,2}/g) as any[]) .map((byte) => parseInt(byte, 16)));
 
       // const firstMatrix = new Uint32Array([0x69,0x69,0x69]);
-      const firstMatrix = fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+      // const firstMatrix = fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+      const firstMatrix = fromHexString("6969");
       const gpuBufferFirstMatrix = device.createBuffer({
         mappedAtCreation: true,
         size: firstMatrix.byteLength,
@@ -246,7 +247,6 @@ function App() {
             // (*ctx).data[58] = (*ctx).bitlen >> 40;
             // (*ctx).data[57] = (*ctx).bitlen >> 48;
             // (*ctx).data[56] = (*ctx).bitlen >> 56;
-
 
             sha256_transform(ctx);
           
