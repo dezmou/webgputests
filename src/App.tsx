@@ -15,8 +15,6 @@ function App() {
 
       const fromHexString = (hexString: string) => Uint32Array.from((hexString.match(/.{1,2}/g) as any[]).map((byte) => parseInt(byte, 16)));
 
-      // const firstMatrix = new Uint32Array([0x69,0x69,0x69]);
-      // const firstMatrix = fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
       const firstMatrix = fromHexString("abcdef");
       const gpuBufferFirstMatrix = device.createBuffer({
         mappedAtCreation: true,
