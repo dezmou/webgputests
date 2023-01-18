@@ -36,7 +36,6 @@ struct SHA256_CTX {
 
   fn sha256_transform(ctx : ptr<function, SHA256_CTX>)
   {
-    // WORD a, b, c, d, e, f, g, h, i, j, t1, t2, m[64];
     var a : u32;
     var b : u32;
     var c : u32;
@@ -106,7 +105,6 @@ struct SHA256_CTX {
       if ((*ctx).datalen == 64) {
         sha256_transform(ctx);
         
-        // DBL_INT_ADD((*ctx).bitlen[0], (*ctx).bitlen[1], 512);
         if ((*ctx).bitlen[0] > 0xffffffff - (512)){
           (*ctx).bitlen[1]++;
         }
