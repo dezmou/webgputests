@@ -3,7 +3,7 @@
 #include <string.h>
 /***********************************************/
 
-#define uchar unsigned char
+#define uchar unsigned int
 #define uint unsigned int
 
 #define DBL_INT_ADD(a,b,c) if (a > 0xffffffff - (c)) ++b; a += c;
@@ -144,29 +144,27 @@ void SHA256Final(SHA256_CTX *ctx, uchar hash[])
 	}
 }
 
-char* SHA256(char* data) {
-	int strLen = strlen(data);
+uint* SHA256(uint* data) {
 	SHA256_CTX ctx;
-	unsigned char hash[32];
-	char* hashStr = malloc(65);
-	strcpy(hashStr, "");
+	uint *hash = malloc(sizeof(uint) * 32);
+	// uint* hashStr = malloc(65 * sizeof(uint));
+	// strcpy(hashStr, "");
 
 	SHA256Init(&ctx);
-	SHA256Update(&ctx, data, strLen);
+	SHA256Update(&ctx, data, 2);
 	SHA256Final(&ctx, hash);
 
-	char s[3];
-	for (int i = 0; i < 32; i++) {
-		sprintf(s, "%02x", hash[i]);
-		strcat(hashStr, s);
-	}
-
-	return hashStr;
+    return hash;
+	// uint s[3];
+	// for (int i = 0; i < 32; i++) {
+	// 	sprintf(s, "%02x", hash[i]);
+	// 	strcat(hashStr, s);
+	// }
 }
 
 int main() {
-    char data[] = "Hello World!";
-    char* sha256 = SHA256(data);
-    printf("%s\n", sha256);
+    uint data[] = {0x69, 0x69};
+    uint* sha256 = SHA256(data);
+    printf("%x%x\n", sha256[0], sha256[1]);
     return 0;
 }
