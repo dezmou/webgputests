@@ -1,4 +1,5 @@
 export default /*WGSL*/`
+
 struct SHA256_CTX {
     data : array<u32, 64>,
     datalen : u32,
@@ -7,8 +8,8 @@ struct SHA256_CTX {
     info : u32,
   };
 
-  @group(0) @binding(0) var<storage, read> text1 : array<u32>;
-  @group(0) @binding(1) var<storage, read> size : array<u32>;
+  @group(0) @binding(0) var<storage, read> input : array<u32>;
+  @group(0) @binding(1) var<storage, read> inputSize : array<u32>;
   @group(0) @binding(2) var<storage, read_write> result : array<u32>;
 
   const SHA256_BLOCK_SIZE = 32;
@@ -100,7 +101,7 @@ struct SHA256_CTX {
   fn sha256_update(ctx : ptr<function, SHA256_CTX>, len : u32)
   {
     for (var i :u32 = 0; i < len; i++) {
-      (*ctx).data[(*ctx).datalen] = text1[i];
+      (*ctx).data[(*ctx).datalen] = input[i];
       (*ctx).datalen++;
       if ((*ctx).datalen == 64) {
         sha256_transform(ctx);
@@ -187,7 +188,7 @@ struct SHA256_CTX {
     ctx.state[6] = 0x1f83d9ab;
     ctx.state[7] = 0x5be0cd19;
 
-    sha256_update(&ctx, size[0]);
+    sha256_update(&ctx, inputSize[0]);
     sha256_final(&ctx, &buf);
 
     for (var i=0; i < 32; i++) {
