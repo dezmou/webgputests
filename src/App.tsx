@@ -281,8 +281,6 @@ function App() {
             ctx.state[6] = 0x1f83d9ab;
             ctx.state[7] = 0x5be0cd19;
 
-
-            // var len : u32 = 2;
             sha256_update(&ctx, size[0]);
             sha256_final(&ctx, &buf);
 
